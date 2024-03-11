@@ -1,0 +1,6 @@
+---
+- name: Including common vars for each platform
+  ansible.builtin.include_vars: "common_{{ role_name }}.yml"
+
+- name: Including the task list for this platform
+  ansible.builtin.include_tasks: "{{ ansible_system }}_{{ ansible_architecture }}_{{ role_name }}.yml"
