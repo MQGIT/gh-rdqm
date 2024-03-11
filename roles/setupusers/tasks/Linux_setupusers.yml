@@ -1,0 +1,52 @@
+---
+- name: Create mqm group
+  ansible.builtin.group:
+    name: mqm
+    gid: "{{ mqm_gid }}"
+
+- name: Create mqm user
+  ansible.builtin.user:
+    name: mqm
+    uid: "{{ mqm_uid }}"
+    group: mqm
+    home: "{{ mqm_home }}"
+    shell: "{{ mqm_shell }}"
+
+- name: Set MQ environment variables through profile
+  ansible.builtin.lineinfile:
+    dest: "{{ mqm_home }}/{{ mqm_profile }}"
+    state: present
+    line: . /opt/mqm/bin/setmqenv -s
+  when: ansible_distribution != 'RedHat'
+
+- name: Set MQ environment variables through profile on RedHat
+  ansible.builtin.lineinfile:
+    dest: "{{ mqm_home }}/.bashrc"
+    state: present
+    line: . /opt/mqm/bin/setmqenv -s
+  when: ansible_distribution == 'RedHat'
+
+- name: Create an admin user
+  ansible.builtin.user:
+    name: mqadm
+    groups: mqm
+    append: true
+    home: "{{ mqm_home }}"
+    shell: "{{ mqm_shell }}"
+
+- name: Add 'mqclient' group
+  become: true
+  ansible.builtin.group:
+    name: mqclient
+    state: present
+    gid: "{{ app_gid }}"
+
+- name: Add the user 'app' with a specific UID
+  become: true
+  vars:
+    apppassword: Passw0rd
+  ansible.builtin.user:
+    name: app
+    password: "{{ 'apppassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}"
+    uid: "{{ app_uid }}"
+    group: mqclient

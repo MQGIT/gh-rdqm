@@ -1,0 +1,12 @@
+---
+- name: Setup for tests
+  hosts: all
+  become: true
+  become_user: mqm
+  
+  tasks:
+    - name: Copy MQSC file to container
+      copy:
+        src: mqsc_display
+        dest: /var/mqm/mqsc_display
+        mode: "0644"
